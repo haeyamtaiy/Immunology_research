@@ -12,11 +12,13 @@ conda install -c imperial-college-research-computing mixcr
 https://anaconda.org/imperial-college-research-computing/mixcr
 
 **Documentation**
+
 Detailed documentation can be found at https://mixcr.readthedocs.io/en/master/
 
 # Mixcr analysis
 
 **Alignment**
+
 The align command aligns raw sequencing reads to reference V, D, J and C genes of T- and B- cell receptors. 
 Mixcr supports fasta, fastq, fastq.gz and paired-end fastq and fastq.gz input. 
 ```
