@@ -25,7 +25,9 @@ Mixcr supports fasta, fastq, fastq.gz and paired-end fastq and fastq.gz input.
 mixcr align -p rna-seq -s hsa -OallowPartialAlignments=true -r $report $fq1 $fq2 $vdjca 
 ```
 In our case we have samples which are paired end reads "$fq1" and "$fq2", and the species we are aligning to is *homo sapiens* "-s hsa". 
+
 "-OallowPartialAlignments=true" option is needed to prevent MiXCR from filtering out partial alignments, that don’t fully cover CDR3 (the default behaviour while processing targeted RepSeq data). MiXCR will try to assemble contigs using those alignments and reconstruct their full CDR3 sequence on the next step.
+
 "$vdjca" is the output file containing the aligned reads & "-r $report" contains the summary of alignment procedure. 
 
 **Assemble Partial**
