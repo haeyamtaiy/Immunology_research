@@ -4,8 +4,11 @@ Is the RNA sequencing method faithful and informative?
 
 **Extracting TCRs from RNAseq data**
 
-Mixcr is a universal tool for fast and accurate analysis of T- and B- cell receptor repoertoire sequencing data. 
+Mixcr is a universal tool for fast and accurate analysis of T- and B- cell receptor repoertoire sequencing data.                    
 The latest version 3.0.11 can be installed through conda 
+```
+conda install -c imperial-college-research-computing mixcr
+```
 https://anaconda.org/imperial-college-research-computing/mixcr
 
 **Documentation**
@@ -13,12 +16,32 @@ Detailed documentation can be found at https://mixcr.readthedocs.io/en/master/
 
 # Mixcr analysis
 
+**Alignment**
+The align command aligns raw sequencing reads to reference V, D, J and C genes of T- and B- cell receptors. 
+Mixcr supports fasta, fastq, fastq.gz and paired-end fastq and fastq.gz input. 
+```
+mixcr align -p rna-seq -s hsa -OallowPartialAlignments=true -r $report $fq1 $fq2 $vdjca 
+```
+In our case we have samples which are paired end reads "$fq1" and "$fq2", and the species we are aligning to is *homo sapiens* "-s hsa". 
+"-OallowPartialAlignments=true" option is needed to prevent MiXCR from filtering out partial alignments, that don’t fully cover CDR3 (the default behaviour while processing targeted RepSeq data). MiXCR will try to assemble contigs using those alignments and reconstruct their full CDR3 sequence on the next step.
+"$vdjca" is the output file containing the aligned reads & "-r $report" contains the summary of alignment procedure. 
+
+**Assemble Partial**
 
 Mixcr allows assemblePartial function which performs an overlap of already aligned reads from the previous step (*.vdjca files) realigns resulting contig, and checks if initial overlap has covered enough part of a non-template N region. Default thresholds in this procedure were optimized to assemble as many contigs as possible while producing zero false overlaps (no false overlaps were detected in all of the benchmarks we have performed).
-The latest version of Mixcr is compatible with the function extend which Perform extension of incomplete TCR CDR3s with uniquely determined V and J genes using germline sequences.
-Download and install mixcr version 3 from conda 
 ```
-conda install -c imperial-college-research-computing mixcr
+mixcr assemblePartial -r $report1 $vdjca $rescued_vdjca
+mixcr assemblePartial -r $report2 $rescued_vdjca $rescued_vdjca_2
+```
+The latest version (3.0.1) Mixcr is compatible with the function extend which Perform extension of incomplete TCR CDR3s with uniquely determined V and J genes using germline sequences.
+```
+mixcr extend -r $report3 $rescued_vdjca_2 $rescued_2_extended_vdjca
+```
+
+**Assemble clones**
+The assemble command builds clonotypes from alignments obtained with align. Clonotypes assembly is performed for a chosen assembling feature.
+```
+mixcr assemble -r $report4 $rescued_2_extended_vdjca $clns
 ```
 script
 ```
