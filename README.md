@@ -2,8 +2,9 @@
 Mixcr pipeline
 
 Download and install mixcr version 3 from conda 
+```
 conda install -c imperial-college-research-computing mixcr
-
+```
 script
 ```
 #!/bin/bash
