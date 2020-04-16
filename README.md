@@ -1,6 +1,21 @@
 # Immunology_research
-Mixcr pipeline
+This is a pipeline created by our team in order to compare TCR targeted sequencing data with RNA sequencing which has been extracted and analysed for TCR-specific reads. 
+Is the RNA sequencing method faithful and informative? 
 
+**Extracting TCRs from RNAseq data**
+
+Mixcr is a universal tool for fast and accurate analysis of T- and B- cell receptor repoertoire sequencing data. 
+The latest version 3.0.11 can be installed through conda 
+https://anaconda.org/imperial-college-research-computing/mixcr
+
+**Documentation**
+Detailed documentation can be found at https://mixcr.readthedocs.io/en/master/
+
+# Mixcr analysis
+
+
+Mixcr allows assemblePartial function which performs an overlap of already aligned reads from the previous step (*.vdjca files) realigns resulting contig, and checks if initial overlap has covered enough part of a non-template N region. Default thresholds in this procedure were optimized to assemble as many contigs as possible while producing zero false overlaps (no false overlaps were detected in all of the benchmarks we have performed).
+The latest version of Mixcr is compatible with the function extend which Perform extension of incomplete TCR CDR3s with uniquely determined V and J genes using germline sequences.
 Download and install mixcr version 3 from conda 
 ```
 conda install -c imperial-college-research-computing mixcr
