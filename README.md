@@ -43,10 +43,19 @@ mixcr extend -r $report3 $rescued_vdjca_2 $rescued_2_extended_vdjca
 ```
 
 **Assemble clones**
+
 The assemble command builds clonotypes from alignments obtained with align. Clonotypes assembly is performed for a chosen assembling feature.
 ```
 mixcr assemble -r $report4 $rescued_2_extended_vdjca $clns
 ```
+
+**Export clones**
+
+Export clones from a binary file (.clns) to a human-readable text file use commands exportClones 
+```
+mixcr exportClones $clns $output 
+```
+
 script
 ```
 #!/bin/bash
