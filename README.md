@@ -1,4 +1,4 @@
-# Immunology_research
+# RNA Sequencing Vs Targeted Sequencing
 This is a pipeline created by our team in order to compare TCR targeted sequencing data with RNA sequencing which has been extracted and analysed for TCR-specific reads. 
 
 Is the RNA sequencing method faithful and informative? 
@@ -14,7 +14,7 @@ The latest version 3.0.11 can be installed through [conda](https://anaconda.org/
 conda install -c imperial-college-research-computing mixcr
 ```
 
-# Mixcr analysis
+## Mixcr analysis
 
 ### Alignment
 
