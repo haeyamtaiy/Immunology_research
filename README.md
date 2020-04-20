@@ -41,6 +41,8 @@ The latest version (3.0.1) Mixcr is compatible with the function extend which Pe
 mixcr extend -r $report3 $rescued_vdjca_2 $rescued_2_extended_vdjca
 ```
 
+hello 
+
 ### Assemble clones
 
 The assemble command builds clonotypes from alignments obtained with align. Clonotypes assembly is performed for a chosen assembling feature.
