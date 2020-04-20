@@ -1,7 +1,7 @@
 # RNA Sequencing Vs Targeted Sequencing
 This is a pipeline created by our team in order to compare T cell receptors (TCR) from 20 blood samples (10 individuals, 6 month interval) obtained through TCR targeted sequencing data with RNA sequencing which has been extracted and analysed for TCR-specific reads. 
 
-Is the RNA sequencing method faithful and informative? 
+> Main goal: Is the RNA sequencing method faithful and informative? 
 
 **Extracting TCRs from RNAseq data**
 
