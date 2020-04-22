@@ -47,6 +47,8 @@ why does it not work!?
 
 hello 
 
+line added from github: testing.2
+
 ### Assemble clones
 
 The assemble command builds clonotypes from alignments obtained with align. Clonotypes assembly is performed for a chosen assembling feature.
