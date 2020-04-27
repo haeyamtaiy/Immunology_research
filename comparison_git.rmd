@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Obtaining information between the samples
+
+```{r setup}
+library(tidyverse)
+library(here)
+library("readxl")
+install.packages('VennDiagram')
+library(VennDiagram)
+install.packages("gplots")
+install.packages("eulerr")
+library(eulerr)
+install.packages("gridExtra")
+library(gridExtra)
+```
+
+```{r loading the files}
+comparison <- dir(path = ".", pattern = "\\COMPARISON.rds", full.names = FALSE, recursive = TRUE)
+ANTI_r <- dir(path = ".", pattern = "\\ANTI_rnaSeq.rds", full.names = FALSE, recursive = TRUE)
+ANTI_t <- dir(path = ".", pattern = "\\ANTI_targeted.rds", full.names = FALSE, recursive = TRUE)
+ANTI_t
+```
+# obtaining the number of observations of each file i.e the number of sequences that were in both samples 
+```{r}
+for (i in comparison){ 
+a <-readRDS(i)
+str(a)
+}
+```
+# obtaning the number of observations of each file i.e the number of sequences in RNA_seq that did not overlap with targeted
+```{r}
+for (i in ANTI_r){ 
+  a <-readRDS(i)
+  str(a)
+}
+```
+# obtaning the number of observations of each file i.e the number of sequences in targeted that did not overlap with RNA_seq 
+```{r}
+for (i in ANTI_t){ 
+  a <-readRDS(i)
+  str(a)
+}
+```
+# Making a venn diagram for each sample to show the number of sequences that overlapped and didn't between RNA_seq and Targeted
+```{r}
+info_table <- read_excel("info_comparison.xlsx", sheet=1)
+info_table
+important_data <- cbind(info_table$calculated_start_RNASeq, info_table$start_targeted_IN, info_table$compared)
+important_data
+file_names  <- cbind(info_table$Sample_RNAseq, info_table$Sample_targeted)
+file_names
+for (i in 1:20) {
+venn.plot <- draw.pairwise.venn(area1      = print(important_data[i,1]),
+                                area2      = print(important_data[i,2]),
+                                cross.area = print(important_data[i,3]),
+                                category   = c(paste(file_names[i,1]),paste(file_names[i,2])),
+                          fill=c("darkmagenta", "darkblue"),
+                          main = paste(file_names[i,1],paste('vs'),paste(file_names[i,2])))
+
+png(paste(file_names[i,1],paste(file_names[i,2],'diagram.png')));
+grid.draw(venn.plot);
+dev.off()
+}
+```
+
+```{r}
+# finding the coefficent for the compared number of sequences in comparison to the start number of sequences
+lm(data = info_table, compared ~ start_targeted_IN) %>% summary() #0.055182
+lm(data = info_table, compared ~ start_rnaSeq) %>% summary() #0.4304
+```
+
+```{r}
+lm(data = info_table, Anti_targeted ~ start_targeted_IN) %>% summary() #1.1764
+lm(data = info_table, Anti_rnaSeq ~ start_rnaSeq) %>% summary() #0.5782
+
+
