@@ -121,23 +121,6 @@ for (i in output){
   saveRDS(Joint_1, paste((h), paste(j), '.rds'))
 } 
 ```
-```{r}
-for (i in output){
-  j <- sub(".t.rds$", ".r.rds", i)
-  h <- sub(".r.rds$", ".t.rds", i)
-  samplename <- sub(".[r-t].rds$", "", i)
-  targeted <- readRDS(h)
-  RNASeq <- readRDS(j)
-  targeted$vFamilyName <- gsub("C","",targeted$vFamilyName)
-  targeted$jFamilyName <- gsub("C","",targeted$jFamilyName) 
-  targeted$vFamilyName <- gsub("TRBV0","TRBV", targeted$vFamilyName)
-  targeted$jFamilyName <- gsub("TRBJ0","TRBJ", targeted$jFamilyName)
-  Joint <- left_join(RNASeq,targeted, by = "nSeqCDR3", copy = T, suffix = c(".r", ".t")) %>% 
-    select(nSeqCDR3, aaSeqCDR3, cloneCount, fam_v, fam_j, fr_check, "count (templates/reads)", vFamilyName, jFamilyName)
-  
-  Joint$samplename <- samplename
-} 
-```
 # using the anti_join to obtain the sequences that did not overlap between the two
 ```{r}
 for (i in output){
