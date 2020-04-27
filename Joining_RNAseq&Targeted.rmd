@@ -24,8 +24,9 @@ rds_output
 targeted <- dir(path = ".", pattern = "\\.t.rds", full.names = FALSE, recursive = TRUE)
 targeted
 ```
-# The columns are not the same name .: renamed targeted so able to compare the two 
+
 ```{r}
+# One sample: so can test the functions
 targeted_1 <- readRDS("R502-12_S10__treg_R502_end.t.rds")
 targeted_1
 RNAseq_1 <- readRDS('R502-12_S10__treg_R502_end.r.rds')
