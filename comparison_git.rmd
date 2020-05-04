@@ -2,48 +2,25 @@
 title: "R Notebook"
 output: html_notebook
 ---
+
 # Obtaining information between the samples
 
 ```{r setup}
 library(tidyverse)
 library(here)
 library("readxl")
-install.packages('VennDiagram')
 library(VennDiagram)
-install.packages("gplots")
-install.packages("eulerr")
 library(eulerr)
-install.packages("gridExtra")
 library(gridExtra)
+library(Biostrings)
 ```
 
 ```{r loading the files}
 comparison <- dir(path = ".", pattern = "\\COMPARISON.rds", full.names = FALSE, recursive = TRUE)
 ANTI_r <- dir(path = ".", pattern = "\\ANTI_rnaSeq.rds", full.names = FALSE, recursive = TRUE)
 ANTI_t <- dir(path = ".", pattern = "\\ANTI_targeted.rds", full.names = FALSE, recursive = TRUE)
-ANTI_t
 ```
-# obtaining the number of observations of each file i.e the number of sequences that were in both samples 
-```{r}
-for (i in comparison){ 
-a <-readRDS(i)
-str(a)
-}
-```
-# obtaning the number of observations of each file i.e the number of sequences in RNA_seq that did not overlap with targeted
-```{r}
-for (i in ANTI_r){ 
-  a <-readRDS(i)
-  str(a)
-}
-```
-# obtaning the number of observations of each file i.e the number of sequences in targeted that did not overlap with RNA_seq 
-```{r}
-for (i in ANTI_t){ 
-  a <-readRDS(i)
-  str(a)
-}
-```
+
 # Making a venn diagram for each sample to show the number of sequences that overlapped and didn't between RNA_seq and Targeted
 ```{r}
 info_table <- read_excel("info_comparison.xlsx", sheet=1)
@@ -71,9 +48,68 @@ dev.off()
 lm(data = info_table, compared ~ start_targeted_IN) %>% summary() #0.055182
 lm(data = info_table, compared ~ start_rnaSeq) %>% summary() #0.4304
 ```
-
 ```{r}
 lm(data = info_table, Anti_targeted ~ start_targeted_IN) %>% summary() #1.1764
 lm(data = info_table, Anti_rnaSeq ~ start_rnaSeq) %>% summary() #0.5782
+```
+```{r}
+# Plotting normalised results
+ggplot(data= info_table) + aes(x = Percentage_TARGETED, y = Percentage_RNASEQ) + geom_point() # This plots the percentage of the overlapped sequences in RNA_seq against the percentage of the overlapped sequences in targeted
+ggplot(data= info_table) + aes(x = normalised_Anti_targeted, y = normalised_Anti_rnaSeq, group) + geom_point() + facet_wrap(~Sample_RNAseq)
+```
 
+# Finding the GC content and sequence length within each nCDR3seq in all the samples for overlapped, anti_RNAseq and anti_targeted. 
+```{r}
+for (i in comparison){
+  samplename <- sub("_COMPARISON.rds", "", i)
+  haeyam <- readRDS(i)
+  haeyam <- haeyam %>%
+	mutate(gc_content = letterFrequency(DNAStringSet(nSeqCDR3), "GC", as.prob = TRUE)[,"G|C"]) %>% 
+  mutate(width = width(DNAStringSet(nSeqCDR3))) 
+haeyam$samplename <- paste0(haeyam$samplename, "_overlap")
+haeyam <- select(haeyam, samplename, gc_content,width)
+  write_tsv(haeyam, paste((samplename),'summary_OL.tsv'))
+}
 
+for (i in ANTI_r){
+  samplename <- sub(".ANTI_rnaSeq.rds", "", i)
+  haeyam <- readRDS(i)
+  haeyam <- haeyam %>%
+	mutate(gc_content = letterFrequency(DNAStringSet(nSeqCDR3), "GC", as.prob = TRUE)[,"G|C"]) %>% 
+  mutate(width = width(DNAStringSet(nSeqCDR3))) 
+haeyam$samplename <- paste0(haeyam$samplename, "_anti_RNAseq")
+haeyam <- select(haeyam, samplename, gc_content,width)
+  write_tsv(haeyam, paste((samplename),'summary_ANTI_RS_.tsv'))
+}
+
+for (i in ANTI_t){
+  samplename <- sub(". ANTI_targeted.rds", "", i)
+  haeyam <- readRDS(i)
+  haeyam <- haeyam %>%
+    drop_na() %>% 
+	mutate(gc_content = letterFrequency(DNAStringSet(nSeqCDR3), "GC", as.prob = TRUE)[,"G|C"]) %>% 
+  mutate(width = width(DNAStringSet(nSeqCDR3))) 
+  haeyam$samplename <- samplename
+  haeyam$samplename <- paste0(haeyam$samplename, "_anti_Targeted")
+  haeyam <- select(haeyam, samplename, gc_content,width)
+  write_tsv(haeyam, paste((samplename),'summary_ANTI_T_.tsv'))
+}
+```
+# Plotting box plots
+```{r}
+concat <- dir(path = ".", pattern = "\\concat.tsv", full.names = FALSE, recursive = TRUE)
+for (a in concat){
+  samplename <- samplename <- sub("_summary_concat.tsv", "", a)
+  f1 <- read_tsv(a)
+  box.plot <- boxplot(f1$gc_content~f1$samplename, names=c("anti_RNA_seq", "anti_Targeted", "Overlapped"), xlab= "Sample", ylab= "GC_content", main= samplename)
+  png(paste(samplename),'boxplot.png');
+grid.draw(box.plot);
+dev.off()
+}
+```
+
+# Experimenting with different versions of boxplots 
+```{r}
+ggplot(a, aes(x= samplename, y= gc_content, colour= samplename)) + geom_violin() + geom_boxplot(width=0.1) # This shows the density of the each sample. Able to visualise the distribution more clearly to see where there is a high density for GC content.  
+ggplot(a, aes(x= samplename, y= gc_content, colour= samplename)) + geom_jitter() + theme(axis.text.x= element_text(angle = 90)) # This plots each nSeqCDR3 as a point, this also shows more clearly where there is a higher amount of sequences for a particular GC content percentage 
+```
