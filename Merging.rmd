@@ -1,0 +1,149 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(data.table)
+require(readr)
+require(stringr)
+require(ggplot2)
+require(broom)
+require(dplyr)
+setwd(setwd("~/Immunology/RNAseq/Big_data/all_output"))
+```
+
+
+
+```{r functions}
+
+parse_TCR_column <- function(tcr_gene_vector, split="Homsap "){
+  tcr_gene_vector%>%str_split(., pattern = split) %>% 
+    lapply(., function(x)gsub("or|see comment|F|P|\\(.*)|\\[|\\]| |,","",x)%>%.[nchar(.)>0] )
+  
+}
+
+
+parse_TCRs <- function(tcr){
+  #Processing  single cell TCR data drom Iria
+  #input: a vector with TCR assignements for ONE cell
+  if(!grepl("-", tcr)){
+    allele_sol=data.frame(family=gsub("\\*.*","",tcr),
+                          gene=NA,
+                          allele=as.character(gsub(pattern =".*\\*","",tcr)))
+    
+  }else{
+    allele_sol=data.frame(family=gsub("\\*","",(gsub(pattern = "-.*","",tcr))),
+                          gene=as.character(gsub(pattern ="\\*.*","", gsub(pattern =".*-","",tcr))),
+                          allele=as.character(gsub(pattern =".*\\*","",tcr)))
+  }
+  
+  #  print(allele_sol)
+  if(length(unique(allele_sol$family))==1){
+    fam=unique(allele_sol$family)%>%as.character()
+    highest_res="fam"
+    if(length(unique(allele_sol$gene))==1){
+      gene=unique(allele_sol$gene)%>%as.character()
+      highest_res="gene"
+      if(length(unique(allele_sol$allele))==1){
+        allele=unique(allele_sol$allele)%>%as.character()
+        highest_res="allele"
+      }else{
+        print("Conflict at allele level")
+        allele=NA
+      }
+    }else{
+      print("Conflict at gene level")
+      gene=NA
+      allele=NA}
+  }else{
+    print("Conflict at family level")
+    fam=NA
+    gene=NA
+    allele=NA
+    highest_res="conflict"
+  }
+  res <- data.frame(seq=paste(tcr, collapse="_", sep=""),
+                    highest_res=as.character(highest_res),
+                    fam=as.character(fam),
+                    gene=as.character(gene),
+                    allele=as.character(allele) )
+  return(res)
+} 
+
+
+
+```
+
+
+
+
+```{r merging files}
+lane_1 <- read_delim(file="G715-1-QC_S21_L001_output.txt", delim = "\t")
+lane_2 <- read_delim(file="G715-1-QC_S21_L002_output.txt", delim = "\t")
+
+
+ lane_1_v <- lane_1%>% .$allVHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+ colnames( lane_1_v ) <- paste0( colnames( lane_1_v ), "_v")
+ lane_1_j <- lane_1%>% .$allJHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_1_j ) <- paste0( colnames( lane_1_j ), "_j")
+ lane_1_d <- lane_1%>% .$allDHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_1_d ) <- paste0( colnames( lane_1_d ), "_d")
+  
+lane_1_anno <- do.call("cbind", list(lane_1, lane_1_v, lane_1_j, lane_1_d))
+
+
+ lane_2_v <- lane_2%>% .$allVHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+ colnames( lane_2_v ) <- paste0( colnames( lane_2_v ), "_v")
+ lane_2_j <- lane_2%>% .$allJHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_2_j ) <- paste0( colnames( lane_2_j ), "_j")
+ lane_2_d <- lane_2%>% .$allDHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_2_d ) <- paste0( colnames( lane_2_d ), "_d")
+  
+lane_2_anno <- do.call("cbind", list(lane_2, lane_2_v, lane_2_j, lane_2_d))
+
+
+
+common=merge(filter(lane_1_anno, str_detect(string = fam_v ,pattern = "TR")), filter(lane_2_anno, str_detect(string = fam_v,pattern = "TR")), by=c("aaSeqCDR3","targetSequences","fam_v", "fam_j"), suffixes = c(".1",".2"),all=T)%>%data.table()
+
+
+
+```
+
+# Writing a loop to create all the RNASeq data ready to compare with targeted sequencing 
+
+```{r}
+output <- dir(path = ".", pattern = "\\_output.txt$", full.names = FALSE, recursive = TRUE)
+for (i in output){ 
+   j <- sub("001","002",i)
+  samplename <- sub("L00[0-9]_output.txt", "", i)
+  lane_1 <- read_tsv(i)
+  lane_1_v <- lane_1%>% .$allVHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+ colnames( lane_1_v ) <- paste0( colnames( lane_1_v ), "_v")
+ lane_1_j <- lane_1%>% .$allJHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_1_j ) <- paste0( colnames( lane_1_j ), "_j")
+  lane_1_anno <- do.call("cbind", list(lane_1, lane_1_v, lane_1_j))
+lane_1_anno_.1 <- lane_1_anno %>%as_tibble()%>%
+  filter(grepl("TRB", allVHitsWithScore)) %>% 
+  group_by(aaSeqCDR3, nSeqCDR3, fam_v, fam_j) %>% 
+  summarise(cloneCount=sum(cloneCount))
+lane_1_anno_.1$samplename <- samplename
+lane_2 <- read_tsv(j)
+lane_2_v <- lane_2%>% .$allVHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+ colnames( lane_2_v ) <- paste0( colnames( lane_2_v ), "_v")
+ lane_2_j <- lane_2%>% .$allJHitsWithScore%>%parse_TCR_column(.,split = ",") %>%lapply(.,parse_TCRs)%>%bind_rows()
+  colnames( lane_2_j ) <- paste0( colnames( lane_2_j ), "_j")
+  lane_2_anno <- do.call("cbind", list(lane_2, lane_2_v, lane_2_j))
+lane_2_anno_.1 <- lane_2_anno %>%as_tibble()%>%
+  filter(grepl("TRB", allVHitsWithScore)) %>% 
+  group_by(aaSeqCDR3, nSeqCDR3, fam_v, fam_j) %>% 
+  summarise(cloneCount=sum(cloneCount))
+common=merge(filter(lane_1_anno_.1, str_detect(string = fam_v ,pattern = "TR")), filter(lane_2_anno_.1, str_detect(string = fam_v,pattern = "TR")), by=c("aaSeqCDR3","nSeqCDR3","fam_v", "fam_j", "cloneCount"), suffixes = c(".1",".2"),all=T)%>%data.table()
+saveRDS(common, paste((samplename),'merged.rds'))
+}
+```
+
+# Creates 20 output RDS files. 
+
+
