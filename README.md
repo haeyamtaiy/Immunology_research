@@ -13,7 +13,7 @@ The latest version 3.0.11 can be installed through [conda](https://anaconda.org/
 ```
 conda install -c imperial-college-research-computing mixcr
 ```
-hi hi 
+
 ## Mixcr analysis
 
 ### Alignment
@@ -40,14 +40,6 @@ The latest version (3.0.1) Mixcr is compatible with the function extend which Pe
 ```
 mixcr extend -r $report3 $rescued_vdjca_2 $rescued_2_extended_vdjca
 ```
-testing if this works 
-
-
-why does it not work!? 
-
-hello 
-
-line added from github: testing.2
 
 ### Assemble clones
 
