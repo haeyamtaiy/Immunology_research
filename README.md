@@ -57,7 +57,7 @@ mixcr exportClones $clns $output
 
 ### Cloud
 
-To run all of 40 of our samples (paired end reads therefore 80 files) we put these commands into a for loop and were run on the microsoft Azura cloud as it required a long time period for mixcr to produce all the desired outputs. Conda, Mixcr and tmux were installed onto the virtual machine made. 
+To run all of 20 of our samples (paired end reads therefore 40 files) we put these commands into a for loop and were run on the microsoft Azura cloud as it required a long time period for mixcr to produce all the desired outputs. Conda, Mixcr and tmux were installed onto the virtual machine made. 
 
 Installing Conda:
 ```
