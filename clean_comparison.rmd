@@ -1,0 +1,116 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(Biostrings)
+library(stringr)
+library(rvest)
+library(stringi)
+```
+
+```{r}
+# The files have the frame shifted Amino Acid sequence 
+targeted <- dir(path = ".", pattern = "treg_+", full.names = FALSE, recursive = TRUE)
+# Files with the lanes merged
+rn_output <- dir(path = ".", pattern = "\\_merged.rds", full.names = FALSE, recursive = TRUE)
+```
+
+```{r Functions}
+Family_names <- function(df, nameee, methodname){
+      df <- filter(df,sequenceStatus == "In")
+      df$vFamilyName <- gsub("C","", df$vFamilyName) 
+      df$jFamilyName <- gsub("C","", df$jFamilyName) 
+      df$vFamilyName <- gsub("TRBV0","TRBV", df$vFamilyName)  
+      df$jFamilyName <- gsub("TRBJ0","TRBJ", df$jFamilyName)
+       df %>% 
+    mutate(sample = nameee, 
+           method = methodname) %>% 
+        select(nSeqCDR3, fr_check, "count (templates/reads)", vFamilyName, jFamilyName, sample, method)
+}
+
+Add_names <- function(df, nameee, methodname){
+  df %>% 
+    mutate(sample = nameee,
+           method = methodname) %>% select(nSeqCDR3, aaSeqCDR3, cloneCount, fam_v, fam_j, sample, method)
+}
+
+
+sequence_info <- function(df_list){
+  lapply(df_list, function(x) { x %>% mutate(gc_content = letterFrequency(DNAStringSet(nSeqCDR3), "GC", as.prob = TRUE)[,"G|C"])%>% 
+  mutate(width = width(DNAStringSet(nSeqCDR3))) %>% mutate(width_summary = case_when(width > 50 ~ "long", width > 40 ~ "medium", TRUE ~ "short"))})
+}
+```
+
+
+```{r}
+targetedfiles <- map(targeted, readRDS)
+samplenames <- sub(".rds", "", targeted)
+t <- map2(targetedfiles, samplenames, methodname = "Overlap_targeted", Family_names)
+
+rnaseqfiles <- map(rn_output, readRDS)
+samplenameR <- sub("\\_merged.rds", "", rn_output)
+r <- map2(rnaseqfiles, samplenameR, methodname= "Overlap_RNAseq", Add_names)
+
+# Overlapped 
+OL <- map2(t, r, inner_join, by = "nSeqCDR3", copy = T, suffix = c(".t", ".r"))
+
+# Anti
+Anti_t <- map2(targetedfiles, samplenames, methodname = "Anti_targeted", Family_names)
+Anti_r <- map2(rnaseqfiles, samplenameR, methodname= "Anti_RNAseq", Add_names)
+AT <- map2(Anti_t,Anti_r, anti_join, by = "nSeqCDR3", copy = T)
+ARS <- map2(Anti_r, Anti_t, anti_join, by = "nSeqCDR3", copy = T)
+
+# GC content and width
+OL <- sequence_info(df_list = OL)
+AT <- sequence_info(df_list = AT)
+ARS <- sequence_info(df_list = ARS)
+
+# Frequency, this is not needed
+
+OLT <- lapply(OL, function(x) { x[rep(row.names(x), x$"count (templates/reads)"), 1:16] %>% select(1:7, 14:16)})
+OLR <- lapply(OL, function(x) { x[rep(row.names(x), x$cloneCount), 1:16] %>% select(1, 8:16)})
+AT <- lapply(AT, function(x) { x[rep(row.names(x), x$"count (templates/reads)"), 1:10]})
+ARS <- lapply(ARS, function(x) { x[rep(row.names(x), x$cloneCount), 1:10]})
+
+OLT
+OLR
+ARS
+AT
+
+```
+
+```{r}
+# Making all the names of the columns the same so can join all 4 dataframes for one sample
+colnames <- c("nSeqCDR3", "aaSeqCDR3", "cloneCount", "fam_v", "fam_j", "sample", "method", "gc_content", "width", "width_summary")
+
+AT <- lapply(AT, setNames, colnames)
+OLR <-lapply(OLR, setNames, colnames)
+OLT <- lapply(OLT, setNames, colnames)
+ARS <- lapply(ARS, setNames, colnames)
+
+# testing testing testing...Joining all the same samples together 
+gsub("_S.*", "", samplenameR)
+
+
+for (i in 1:20) {
+ testing <- rbind(OLR[[i]], OLT[[i]], AT[[i]], ARS[[i]])
+   write_tsv(testing, paste((i),".tsv"))
+   }
+
+```
+
+```{r}
+# Graphs 
+files_list <- dir(path = ".", pattern = "\\ .tsv", full.names = FALSE, recursive = TRUE)
+final_files <- map(files_list, read_tsv)
+
+lapply(final_files, function(x) {ggplot(data = x) + geom_boxplot(aes( x = sample, y = width, group = method, colour = method)) + facet_wrap(~fam_j) })
+lapply(final_files, function(x) {ggplot(data = x) + geom_boxplot(aes( x = sample, y = gc_content, group = method, colour = method)) + facet_wrap(~fam_j) })
+ggplot(data = f1) + geom_boxplot(aes( x = method, y = width, group = width_summary, colour = width_summary)) + facet_wrap(~fam_j)
+
+```
+
