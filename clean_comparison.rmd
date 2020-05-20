@@ -3,6 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+
 ```{r}
 library(tidyverse)
 library(here)
@@ -83,6 +84,26 @@ AT
 
 ```
 
+Attempting to work out family gene percentage 
+
+```{r}
+b <- lapply(OLR, function(x) { aggregate(x, by = list(unique_fam = x$fam_v), FUN = length) %>% select(unique_fam, cloneCount) %>% group_by(unique_fam, cloneCount) %>%  mutate(proportion = prop.table(cloneCount))})  
+sum(b[[1]]$proportion)
+
+
+```
+Many problems with this
+1) doesnt contain the rest of the columns because not the same length
+2) cloneCount isn't actually clone count it is the length of the unique families within the sample, unsure how to put this into a separate column.
+
+
+
+
+
+
+
+
+# Joining the same sample together, i.e Anti_targeted, Anti_rnaseq, overlap_T, overlap_RS of the same sample into one dataframe
 ```{r}
 # Making all the names of the columns the same so can join all 4 dataframes for one sample
 colnames <- c("nSeqCDR3", "aaSeqCDR3", "cloneCount", "fam_v", "fam_j", "sample", "method", "gc_content", "width", "width_summary")
